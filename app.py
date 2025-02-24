@@ -748,7 +748,7 @@ INDEX_HTML = """
 </head>
 <body>
     <div id="loading-indicator">Loading...</div>
-    <button id="mobile-toggle" class="btn btn-primary toggle-btn" onclick="toggleSidebar()">☰</button>
+    <button id="mobile-toggle" class="btn btn-primary toggle-btn" onclick="toggleSidebar()">🔍</button>
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div> <!-- New overlay -->
     <div class="sidebar">
         <h2>SEC 13F Dashboard</h2>
@@ -918,7 +918,7 @@ INDEX_HTML = """
         if (sidebar.classList.contains('active')) {
             toggleBtn.textContent = '✕'; // Close icon when sidebar is open
         } else {
-            toggleBtn.textContent = '☰'; // Menu icon when sidebar is closed
+            toggleBtn.textContent = '🔍'; // Magnifying glass when sidebar is closed
         }
     }
 
