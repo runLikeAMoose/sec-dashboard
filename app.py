@@ -464,10 +464,23 @@ INDEX_HTML = """
             padding: 20px;
             transition: transform 0.2s ease, background-color 0.3s ease;
             color: var(--text-color);
+            position: relative; /* Helps contain children */
         }
 
         .card:hover {
             transform: translateY(-5px);
+        }
+
+        /* Specific styles for chart containers */
+        .chart-container {
+            position: relative; /* Allows absolute positioning of canvas if needed */
+            height: 400px; /* Fixed height for desktop */
+            width: 100%; /* Full width of parent */
+        }
+
+        #changes-chart {
+            width: 100% !important; /* Override Chart.js inline styles */
+            height: 100% !important; /* Fill container height */
         }
 
         .form-control {
@@ -713,6 +726,12 @@ INDEX_HTML = """
     .sidebar-overlay.active {
         display: block;
     }
+    .card {
+        padding: 15px;
+    }
+    .chart-container {
+        height: 300px; /* Smaller fixed height for mobile */
+    }
 }
     </style>
 </head>
@@ -756,13 +775,17 @@ INDEX_HTML = """
             <div class="col-md-6">
                 <div class="card">
                     <h3 class="mb-3">Top 10 Holdings</h3>
-                    <canvas id="top-holdings-chart"></canvas>
+                    <div class="chart-container">
+                        <canvas id="top-holdings-chart"></canvas>
+                    </div>
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="card">
                     <h3 class="mb-3">Quarterly Changes</h3>
-                    <canvas id="changes-chart"></canvas>
+                    <div class="chart-container">
+                        <canvas id="changes-chart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1093,80 +1116,96 @@ INDEX_HTML = """
     }
 
     function renderChangesChart() {
-        if (changesChart) changesChart.destroy();
+    if (changesChart) changesChart.destroy();
 
-        if (!filteredHoldings.length) {
-            const changesCtx = document.getElementById('changes-chart').getContext('2d');
-            changesChart = new Chart(changesCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['No Data'],
-                    datasets: [{
-                        label: 'Shares',
-                        data: [0],
-                        backgroundColor: 'rgba(255, 99, 132, 0.6)'
-                    }]
-                },
-                options: { scales: { y: { beginAtZero: true } } }
-            });
-            return;
-        }
-
-        const quarters = [...new Set(filteredHoldings.map(h => h.quarter))].sort();
-
-        const groupedShares = filteredHoldings.reduce((acc, curr) => {
-            const key = `${curr.name_of_issuer}-${curr.quarter}`;
-            if (!acc[key]) {
-                acc[key] = { name_of_issuer: curr.name_of_issuer, quarter: curr.quarter, sshprnamt: 0 };
-            }
-            acc[key].sshprnamt += curr.sshprnamt || 0;
-            return acc;
-        }, {});
-
-        const sharesData = Object.values(groupedShares);
-
-        const issuerTotals = filteredHoldings.reduce((acc, curr) => {
-            acc[curr.name_of_issuer] = (acc[curr.name_of_issuer] || 0) + (curr.sshprnamt || 0);
-            return acc;
-        }, {});
-        const topIssuers = Object.entries(issuerTotals)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 5)
-            .map(entry => entry[0]);
-
-        const datasets = topIssuers.map(issuer => {
-            const data = quarters.map(quarter => {
-                const entry = sharesData.find(d => d.name_of_issuer === issuer && d.quarter === quarter);
-                return entry ? (entry.sshprnamt || 0) : 0;
-            });
-            return {
-                label: issuer,
-                data: data,
-                backgroundColor: getIssuerColor(issuer)
-            };
-        });
-
+    if (!filteredHoldings.length) {
         const changesCtx = document.getElementById('changes-chart').getContext('2d');
         changesChart = new Chart(changesCtx, {
             type: 'bar',
             data: {
-                labels: quarters,
-                datasets: datasets.length ? datasets : [{ label: 'Shares', data: [0], backgroundColor: 'rgba(255, 99, 132, 0.6)' }]
+                labels: ['No Data'],
+                datasets: [{
+                    label: 'Shares',
+                    data: [0],
+                    backgroundColor: 'rgba(255, 99, 132, 0.6)'
+                }]
             },
-            options: {
-                scales: {
-                    y: { beginAtZero: true, title: { display: true, text: 'Shares' } },
-                    x: { stacked: false }
-                },
-                indexAxis: 'x',
-                plugins: {
-                    legend: { display: true, position: 'bottom' },
-                    title: { display: true, text: 'Shares Held by Top Issuers' }
-                }
-            }
+            options: { scales: { y: { beginAtZero: true } } }
         });
-        updateChartTheme(document.documentElement.getAttribute('data-theme') || 'light');
+        return;
     }
+
+    const quarters = [...new Set(filteredHoldings.map(h => h.quarter))].sort();
+
+    const groupedShares = filteredHoldings.reduce((acc, curr) => {
+        const key = `${curr.name_of_issuer}-${curr.quarter}`;
+        if (!acc[key]) {
+            acc[key] = { name_of_issuer: curr.name_of_issuer, quarter: curr.quarter, sshprnamt: 0 };
+        }
+        acc[key].sshprnamt += curr.sshprnamt || 0;
+        return acc;
+    }, {});
+
+    const sharesData = Object.values(groupedShares);
+
+    const issuerTotals = filteredHoldings.reduce((acc, curr) => {
+        acc[curr.name_of_issuer] = (acc[curr.name_of_issuer] || 0) + (curr.sshprnamt || 0);
+        return acc;
+    }, {});
+    const topIssuers = Object.entries(issuerTotals)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(entry => entry[0]);
+
+    const datasets = topIssuers.map(issuer => {
+        const data = quarters.map(quarter => {
+            const entry = sharesData.find(d => d.name_of_issuer === issuer && d.quarter === quarter);
+            return entry ? (entry.sshprnamt || 0) : 0;
+        });
+        return {
+            label: issuer,
+            data: data,
+            backgroundColor: getIssuerColor(issuer)
+        };
+    });
+
+    const changesCtx = document.getElementById('changes-chart').getContext('2d');
+    changesChart = new Chart(changesCtx, {
+        type: 'bar',
+        data: {
+            labels: quarters,
+            datasets: datasets.length ? datasets : [{ label: 'Shares', data: [0], backgroundColor: 'rgba(255, 99, 132, 0.6)' }]
+        },
+        options: {
+            scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'Shares' } },
+                x: { stacked: false }
+            },
+            indexAxis: 'x',
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        font: { size: 10 },
+                        padding: 5,
+                        boxWidth: 20,
+                        usePointStyle: true
+                    },
+                    maxHeight: 50
+                },
+                title: {
+                    display: true,
+                    text: 'Shares Held by Top Issuers',
+                    font: { size: 14 }
+                }
+            },
+            responsive: true, // Chart adjusts to container size
+            maintainAspectRatio: false // Allow stretching within container
+        }
+    });
+    updateChartTheme(document.documentElement.getAttribute('data-theme') || 'light');
+}
 
     function sortTable(column) {
         const th = document.querySelector(`th[data-column="${column}"]`);
