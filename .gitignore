@@ -1,0 +1,4 @@
+__pycache__/
+venv/
+*.pyc
+fund_managers_cache.json
