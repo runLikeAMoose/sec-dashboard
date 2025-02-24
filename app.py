@@ -420,6 +420,12 @@ INDEX_HTML = """
             z-index: 1300; /* Above everything when active */
         }
 
+        .sidebar-footer {
+            padding: 20px 0;
+            text-align: center; /* Center the toggle in the footer */
+            border-top: 1px solid var(--border-color); /* Optional: Add a visual separator */
+        }
+
         .toggle-btn {
             display: none; /* Hidden by default on desktop */
             position: fixed;
@@ -673,10 +679,6 @@ INDEX_HTML = """
 
         /* Moon/Sun Emoji Toggle (xAI-inspired) */
         .theme-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1100;
             background: var(--toggle-bg);
             border: 1px solid var(--border-color);
             border-radius: 50%;
@@ -687,9 +689,10 @@ INDEX_HTML = """
             justify-content: center;
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
-            font-size: 24px; /* Larger emoji */
+            font-size: 24px; /* Larger emoji for visibility */
             color: var(--toggle-text-color);
             box-shadow: 0 2px 6px var(--shadow-color);
+            margin: 0 auto; /* Center the toggle horizontally in the footer */
         }
 
         .theme-toggle:hover {
@@ -710,6 +713,9 @@ INDEX_HTML = """
         transform: translateX(0);
         z-index: 1300;
     }
+    .sidebar-footer {
+        padding: 15px 0;
+    }
     .main-content {
         margin-left: 0;
         padding: 70px 20px 20px 20px; /* Increased from 60px to 70px */
@@ -718,8 +724,9 @@ INDEX_HTML = """
         display: block;
     }
     .theme-toggle {
-        top: 60px;
-        right: 15px;
+        width: 36px; /* Slightly smaller on mobile */
+        height: 36px;
+        font-size: 20px;
     }
     .sidebar-overlay {
         display: none;
@@ -733,6 +740,9 @@ INDEX_HTML = """
     .chart-container {
         height: 300px; /* Smaller fixed height for mobile */
     }
+    .manager-header {
+        padding-top: 10px; /* Add some space above on mobile */
+    }
 }
     </style>
 </head>
@@ -740,7 +750,6 @@ INDEX_HTML = """
     <div id="loading-indicator">Loading...</div>
     <button id="mobile-toggle" class="btn btn-primary toggle-btn" onclick="toggleSidebar()">☰</button>
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div> <!-- New overlay -->
-    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">🌙</div>
     <div class="sidebar">
         <h2>SEC 13F Dashboard</h2>
         <div class="mb-4 position-relative">
@@ -769,9 +778,14 @@ INDEX_HTML = """
             </div>
             <button class="btn btn-success w-100" onclick="applyFilters()">Apply Filters</button>
         </div>
+        <div class="sidebar-footer mt-auto">
+            <div class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">🌙</div>
+        </div>
     </div>
-    <div class="main-content">
-        <h2 id="manager-name" class="mb-4">Select a Fund Manager</h2>
+        <div class="main-content">
+            <div class="manager-header d-flex align-items-center mb-4">
+            <h2 id="manager-name" class="mb-0">Select a Fund Manager</h2>
+        </div>
         <div class="row g-4">
             <div class="col-md-6">
                 <div class="card">
@@ -839,7 +853,7 @@ INDEX_HTML = """
     function updateThemeIcon() {
         const toggle = document.querySelector('.theme-toggle');
         const theme = document.documentElement.getAttribute('data-theme');
-        toggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+        toggle.textContent = theme === 'dark' ? '☀️' : '🌙'; // Sun for dark mode, moon for light mode
     }
 
     function updateChartTheme(theme) {
