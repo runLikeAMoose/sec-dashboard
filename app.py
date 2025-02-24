@@ -643,22 +643,17 @@ INDEX_HTML = """
 
         @media (max-width: 768px) {
             .sidebar {
-                transform: translateX(-280px);
-                width: 260px;
+                transform: translateX(-280px); /* Hidden off-screen */
             }
             .sidebar.active {
-                transform: translateX(0);
+                transform: translateX(0); /* Slide in when active */
             }
             .main-content {
                 margin-left: 0;
                 padding: 20px;
             }
             .toggle-btn {
-                display: block;
-                position: fixed;
-                top: 15px;
-                left: 15px;
-                z-index: 1100;
+                display: block; /* Visible on mobile */
             }
             .theme-toggle {
                 top: 60px;
@@ -669,7 +664,7 @@ INDEX_HTML = """
 </head>
 <body>
     <div id="loading-indicator">Loading...</div>
-    <button class="btn btn-primary toggle-btn d-none" onclick="toggleSidebar()">☰</button>
+    <button id="mobile-toggle" class="btn btn-primary toggle-btn d-none" onclick="toggleSidebar()">☰</button>
     <div class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">🌙</div>
     <div class="sidebar">
         <h2>SEC 13F Dashboard</h2>
