@@ -478,7 +478,8 @@ INDEX_HTML = """
             width: 100%; /* Full width of parent */
         }
 
-        #changes-chart {
+        /* Style both canvases directly */
+        #top-holdings-chart, #changes-chart {
             width: 100% !important; /* Override Chart.js inline styles */
             height: 100% !important; /* Fill container height */
         }
@@ -1062,58 +1063,86 @@ INDEX_HTML = """
     }
 
     function renderTopHoldingsChart() {
-        if (topHoldingsChart) topHoldingsChart.destroy();
+    if (topHoldingsChart) topHoldingsChart.destroy();
 
-        if (!filteredHoldings.length) {
-            const topCtx = document.getElementById('top-holdings-chart').getContext('2d');
-            topHoldingsChart = new Chart(topCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['No Data'],
-                    datasets: [{
-                        label: 'Value ($)',
-                        data: [0],
-                        backgroundColor: 'rgba(54, 162, 235, 0.6)'
-                    }]
-                },
-                options: { scales: { y: { beginAtZero: true } } }
-            });
-            return;
-        }
-
-        const sortedQuarters = [...new Set(filteredHoldings.map(h => h.quarter))].sort();
-        const latestQuarter = sortedQuarters[sortedQuarters.length - 1];
-
-        const topHoldingsData = filteredHoldings
-            .filter(h => h.quarter === latestQuarter)
-            .reduce((acc, curr) => {
-                const issuer = curr.name_of_issuer;
-                if (!acc[issuer]) acc[issuer] = { value_fixed: 0, sshprnamt: 0 };
-                acc[issuer].value_fixed += curr.value_fixed || 0;
-                acc[issuer].sshprnamt += curr.sshprnamt || 0;
-                return acc;
-            }, {});
-        
-        const topHoldings = Object.entries(topHoldingsData)
-            .map(([name_of_issuer, data]) => ({ name_of_issuer, ...data }))
-            .sort((a, b) => b.value_fixed - a.value_fixed)
-            .slice(0, 10);
-
+    if (!filteredHoldings.length) {
         const topCtx = document.getElementById('top-holdings-chart').getContext('2d');
         topHoldingsChart = new Chart(topCtx, {
             type: 'bar',
             data: {
-                labels: topHoldings.length ? topHoldings.map(h => h.name_of_issuer) : ['No Data'],
+                labels: ['No Data'],
                 datasets: [{
                     label: 'Value ($)',
-                    data: topHoldings.length ? topHoldings.map(h => h.value_fixed || 0) : [0],
+                    data: [0],
                     backgroundColor: 'rgba(54, 162, 235, 0.6)'
                 }]
             },
-            options: { scales: { y: { beginAtZero: true } } }
+            options: {
+                scales: { y: { beginAtZero: true } },
+                responsive: true, // Ensure responsiveness
+                maintainAspectRatio: false // Allow stretching within container
+            }
         });
-        updateChartTheme(document.documentElement.getAttribute('data-theme') || 'light');
+        return;
     }
+
+    const sortedQuarters = [...new Set(filteredHoldings.map(h => h.quarter))].sort();
+    const latestQuarter = sortedQuarters[sortedQuarters.length - 1];
+
+    const topHoldingsData = filteredHoldings
+        .filter(h => h.quarter === latestQuarter)
+        .reduce((acc, curr) => {
+            const issuer = curr.name_of_issuer;
+            if (!acc[issuer]) acc[issuer] = { value_fixed: 0, sshprnamt: 0 };
+            acc[issuer].value_fixed += curr.value_fixed || 0;
+            acc[issuer].sshprnamt += curr.sshprnamt || 0;
+            return acc;
+        }, {});
+    
+    const topHoldings = Object.entries(topHoldingsData)
+        .map(([name_of_issuer, data]) => ({ name_of_issuer, ...data }))
+        .sort((a, b) => b.value_fixed - a.value_fixed)
+        .slice(0, 10);
+
+    const topCtx = document.getElementById('top-holdings-chart').getContext('2d');
+    topHoldingsChart = new Chart(topCtx, {
+        type: 'bar',
+        data: {
+            labels: topHoldings.length ? topHoldings.map(h => h.name_of_issuer) : ['No Data'],
+            datasets: [{
+                label: 'Value ($)',
+                data: topHoldings.length ? topHoldings.map(h => h.value_fixed || 0) : [0],
+                backgroundColor: 'rgba(54, 162, 235, 0.6)'
+            }]
+        },
+        options: {
+            scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'Value ($)' } }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top', // Match Quarterly Changes
+                    labels: {
+                        font: { size: 10 },
+                        padding: 5,
+                        boxWidth: 20,
+                        usePointStyle: true
+                    },
+                    maxHeight: 50
+                },
+                title: {
+                    display: true,
+                    text: 'Top 10 Holdings',
+                    font: { size: 14 }
+                }
+            },
+            responsive: true, // Ensure chart adjusts to container
+            maintainAspectRatio: false // Allow stretching within container
+        }
+    });
+    updateChartTheme(document.documentElement.getAttribute('data-theme') || 'light');
+}
 
     function renderChangesChart() {
     if (changesChart) changesChart.destroy();
