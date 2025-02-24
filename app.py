@@ -361,8 +361,8 @@ INDEX_HTML = """
             --table-header-bg: #333333;
             --new-position-bg: #1a4a3c;
             --shadow-color: rgba(0, 0, 0, 0.2);
-            --btn-primary-bg: #4a90e2;
-            --btn-primary-hover: #5aa0e8;
+            --btn-primary-bg: #2b6cb0; /* Darker blue */
+            --btn-primary-hover: #4a90e2; /* Original blue */
             --btn-success-bg: #38a169;
             --btn-success-hover: #48b17a;
             --placeholder-color: #9ca3af;
@@ -394,6 +394,53 @@ INDEX_HTML = """
             background: var(--sidebar-bg);
             box-shadow: 2px 0 15px var(--shadow-color);
             transition: transform 0.3s ease, background 0.3s ease;
+            z-index: 1000; /* Base z-index */
+        }
+
+
+        .sidebar-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+            z-index: 1250; /* Below active sidebar (1300), above toggle (1200) */
+            transition: opacity 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .sidebar.active {
+            transform: translateX(0);
+            z-index: 1300; /* Above everything when active */
+        }
+
+        .toggle-btn {
+            display: none; /* Hidden by default on desktop */
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1200;
+            font-size: 24px; /* Icon size */
+            padding: 8px 12px 12px 12px; /* Top: 8px, Right: 12px, Bottom: 12px, Left: 12px */
+            background-color: var(--btn-primary-bg);
+            border: none;
+            border-radius: 8px;
+            color: #ffffff;
+            transition: background-color 0.3s ease;
+        }
+
+        .toggle-btn:hover {
+            background-color: var(--btn-primary-hover); /* Use theme variable for hover */
+        }
+
+        #manager-name {
+            margin-top: 0; /* Remove any default top margin that might push it up */
         }
 
         .sidebar h2 {
@@ -641,30 +688,38 @@ INDEX_HTML = """
             transform: scale(0.95);
         }
 
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-280px); /* Hidden off-screen */
-            }
-            .sidebar.active {
-                transform: translateX(0); /* Slide in when active */
-            }
-            .main-content {
-                margin-left: 0;
-                padding: 20px;
-            }
-            .toggle-btn {
-                display: block; /* Visible on mobile */
-            }
-            .theme-toggle {
-                top: 60px;
-                right: 15px;
-            }
-        }
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-280px);
+    }
+    .sidebar.active {
+        transform: translateX(0);
+        z-index: 1300;
+    }
+    .main-content {
+        margin-left: 0;
+        padding: 70px 20px 20px 20px; /* Increased from 60px to 70px */
+    }
+    .toggle-btn {
+        display: block;
+    }
+    .theme-toggle {
+        top: 60px;
+        right: 15px;
+    }
+    .sidebar-overlay {
+        display: none;
+    }
+    .sidebar-overlay.active {
+        display: block;
+    }
+}
     </style>
 </head>
 <body>
     <div id="loading-indicator">Loading...</div>
-    <button id="mobile-toggle" class="btn btn-primary toggle-btn d-none" onclick="toggleSidebar()">☰</button>
+    <button id="mobile-toggle" class="btn btn-primary toggle-btn" onclick="toggleSidebar()">☰</button>
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div> <!-- New overlay -->
     <div class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">🌙</div>
     <div class="sidebar">
         <h2>SEC 13F Dashboard</h2>
@@ -815,7 +870,18 @@ INDEX_HTML = """
 
     function toggleSidebar() {
         const sidebar = document.querySelector('.sidebar');
+        const toggleBtn = document.getElementById('mobile-toggle');
+        const overlay = document.getElementById('sidebar-overlay');
+        
         sidebar.classList.toggle('active');
+        overlay.classList.toggle('active');
+        
+        // Update button icon based on sidebar state
+        if (sidebar.classList.contains('active')) {
+            toggleBtn.textContent = '✕'; // Close icon when sidebar is open
+        } else {
+            toggleBtn.textContent = '☰'; // Menu icon when sidebar is closed
+        }
     }
 
     let selectedCik = null;
